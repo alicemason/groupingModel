@@ -66,7 +66,7 @@ plot(1:4,group_1,'+',5:8,group_2,'+',9:12,group_3,'+')
 %% Simon's Version
 % make group markers
 
-groupSize = [3 3 3 3];
+groupSize = [];
 
 gContext = [];
 pContext = [];

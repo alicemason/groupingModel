@@ -20,9 +20,9 @@ v=[];
 
 for t=1:nTrials
 % Set the group sizes
-groupSize=randsample(possGroupSize,numGroups,true);
+groupSize=randsample(possGroupSize,numGroups,true)
 while (sum(groupSize)>listlength || sum(groupSize)<listlength)
-groupSize=randsample(possGroupSize,numGroups,true);
+groupSize=randsample(possGroupSize,numGroups,true)
 end
     
     % make group markers
@@ -34,14 +34,9 @@ for gz=1:length(groupSize)
     gContext = [gContext repmat(gz,1,groupSize(gz))];
     pContext = [pContext linspace(0,1,groupSize(gz))];
 end
-item_probe=listlength-(groupSize(numGroups));
 
 v_GV = phi_g.^abs(gContext(listlength)-gContext);% group context of last group
-v_PV = phi_p.^abs(pContext(item_probe)-pContext); % first item of last group
-
-
-
-
+v_PV = phi_p.^abs(pContext(10)-pContext); % first item of last group
 
 t_v = rho*v_GV + (1-rho)*v_PV;
 v(t,:)=t_v;
