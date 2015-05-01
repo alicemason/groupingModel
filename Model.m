@@ -61,8 +61,27 @@ group_3=item_strength(9:12)*group_strength(3)
 % create a vector that tells you the group strength of each item
 item_group_strength=[group_1,group_2,group_3]
 
-
 plot(1:4,group_1,'+',5:8,group_2,'+',9:12,group_3,'+')
+
+%% Simon's Version
+% make group markers
+
+groupSize = [3 3 3 3];
+
+gContext = [];
+pContext = [];
+
+for gz=1:length(groupSize)
+    gContext = [gContext repmat(gz,1,groupSize(gz))];
+    pContext = [pContext linspace(0,1,groupSize(gz))];
+end
+
+v_GV = phi_g.^abs(gContext(10)-gContext);
+v_PV = phi_p.^abs(pContext(10)-pContext);
+
+v = rho*v_GV + (1-rho)*v_PV;
+
+plot(v);
 
 
 % multiply items by eta_gv to get primacy gradient?
@@ -71,7 +90,7 @@ plot(1:4,group_1,'+',5:8,group_2,'+',9:12,group_3,'+')
 % group_3=(item_strength(9:12)*group_strength(3)).*eta_gv
 
 
- item=1:listlength;
+% item=1:listlength;
 % plot(item,item_strength)
 % xlabel('Item Strength')
 % ylabel('P(recall)')
