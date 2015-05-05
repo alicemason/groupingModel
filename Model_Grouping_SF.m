@@ -5,14 +5,16 @@ phi_p = 0.1;
 phi_g=0.3;
 gamma=0.97% rate of change of primacy gradient across groups
 sigma_gp=0.02%
+sigma_v=0.02;
 rho=0.3;
 
 % experimental details
-nTrials=1000;
+nTrials=10;
 listlength=12;
 possGroupSize=1:5;
 
 v=zeros(nTrials, listlength); % this can be easily pre-allocated, so should be
+r=zeros(nTrials, listlength); % this can be easily pre-allocated, so should be
 
 for t=1:nTrials
     % Set the group sizes
@@ -56,11 +58,26 @@ for t=1:nTrials
     v_GV = phi_g.^abs(gContext(item_probe)-gContext);
     v_PV = phi_p.^abs(pContext(item_probe)-pContext);
 
+    % sum group and item vectors 
     t_v = rho*v_GV + (1-rho)*v_PV;
     v(t,:)=t_v;
+%Next step: implement item recall; 
+%for the moment, just assume recall of a single item using first item/last group as cue. 
+%Take average of the recalls, which will effectively be a first recall probability function.
+   
+for j=1:length(v)
+N=rand*sigma_v
+a(t,j)=(v(t,j)+N)*(1-r(t,j));
+end
+    
 end
 Av_v=mean(v);
-plot(Av_v);
+Av_a=mean(a);
+plot(Av_a);
+
+
+
+
 
 % simulation with variable group sizes
 % simulate individual trials (list=12) 100 trials
