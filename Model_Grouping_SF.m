@@ -51,31 +51,41 @@ for t=1:nTrials
     
     gContext = [];
     pContext = [];
+    absP = [];
     
     for gz=1:length(groupSize)
         gContext = [gContext repmat(gz,1,groupSize(gz))];
         pContext = [pContext linspace(0,1,groupSize(gz))];
+        absP = [absP 1:groupSize(gz)];
     end
     item_probe=listlength-(groupSize(numGroups))+1; % want to probe for first item of last group
     % (what you had was close)
     
-    % priamcy gradient 
+    % priamcy gradient
     % for each item work out first item of each group
-    for i=1:listlength
-group_start(i)=listlength-sum(groupSize(gContext(i):numGroups))+1;
-    end
+%     for i=1:listlength
+%         group_start(i)=listlength-sum(groupSize(gContext(i):numGroups))+1;
+%     end
     % work out strength of each item within that group to first item of
     % that group
-       v_PV = phi_p.^abs(pContext(group_start)-pContext);
-%scale by noisy learning paramter
-N=randn(1,12)+sigma_gp;
-eta_gv=gamma.^(pContext-1)+N; % I know this is wrong
-
-% implemented primacy gradient 
-v_PV=eta_gv.*v_PV         
- % strength of each item to others in group
-%  v_PV = phi_p.^abs(pContext(item_probe)-pContext);
- v_GV = phi_g.^abs(gContext(item_probe)-gContext);
+    
+    % huh? this is using group_start as the cue, but we still want to use
+    % item_probe
+    % v_PV = phi_p.^abs(pContext(group_start)-pContext);
+    
+    v_PV = phi_p.^abs(pContext(item_probe)-pContext);
+    
+    %scale by noisy learning paramter
+    noise=randn(1,12)*sigma_gp; % watch out, this needs to be multiplication
+    eta_gv=gamma.^(absP-1)+noise; % absP is the within-group ordinal position of
+                            % all items (a vector)
+   % renamed N to noise, as N is usually used to mean "number"
+    
+    % implemented primacy gradient
+    v_PV=eta_gv.*v_PV
+    % strength of each item to others in group
+    %  v_PV = phi_p.^abs(pContext(item_probe)-pContext);
+    v_GV = eta_gv.*phi_g.^abs(gContext(item_probe)-gContext);
     
     % sum group and item vectors to get activation of each item
     t_v = rho*v_GV + (1-rho)*v_PV;
