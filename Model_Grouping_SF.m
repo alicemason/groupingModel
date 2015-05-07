@@ -59,10 +59,25 @@ for t=1:nTrials
     item_probe=listlength-(groupSize(numGroups))+1; % want to probe for first item of last group
     % (what you had was close)
     
-    v_GV = phi_g.^abs(gContext(item_probe)-gContext);
-    v_PV = phi_p.^abs(pContext(item_probe)-pContext);
+    % priamcy gradient 
+    % for each item work out first item of each group
+    for i=1:listlength
+group_start(i)=listlength-sum(groupSize(gContext(i):numGroups))+1;
+    end
+    % work out strength of each item within that group to first item of
+    % that group
+       v_PV = phi_p.^abs(pContext(group_start)-pContext);
+%scale by noisy learning paramter
+N=randn(1,12)+sigma_gp;
+eta_gv=gamma.^(pContext-1)+N; % I know this is wrong
+
+% implemented primacy gradient 
+v_PV=eta_gv.*v_PV         
+ % strength of each item to others in group
+%  v_PV = phi_p.^abs(pContext(item_probe)-pContext);
+ v_GV = phi_g.^abs(gContext(item_probe)-gContext);
     
-    % sum group and item vectors
+    % sum group and item vectors to get activation of each item
     t_v = rho*v_GV + (1-rho)*v_PV;
     v(t,:)=t_v;
     %Next step: implement item recall;
@@ -80,6 +95,7 @@ for t=1:nTrials
     a(max_idx) = NaN; 
     second_max = max(a);
     a = max_value; % not sure what this line does
+   
     
     % rewrote the following slightly to save space
     if (max_value-second_max)>theta
