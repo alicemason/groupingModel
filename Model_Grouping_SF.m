@@ -15,12 +15,12 @@ listlength=12;
 possGroupSize=1:5;
 
 v=zeros(nTrials, listlength); % this can be easily pre-allocated, so should be
-    recalled_item=zeros(nTrials,1);
+recalled_item=zeros(nTrials,1);
 
 N_O=0; % counter for non recalled items
 for t=1:nTrials
     
-    r=zeros(1,listlength); 
+    r=zeros(1,listlength);
     % Set the group sizes
     % moved following here
     %numGroups = 4; % number of groups - did we decide that there needed to be 4
@@ -69,29 +69,35 @@ for t=1:nTrials
     %for the moment, just assume recall of a single item using first item/last group as cue.
     %Take average of the recalls, which will effectively be a first recall probability function.
     
-
+    
     N=randn(1,listlength)*sigma_v;
     a=(t_v+N).*(1-r);
-        %a(t,:)=(v(t,:)+N)*(1-r(t,:));
-
+    %a(t,:)=(v(t,:)+N)*(1-r(t,:));
+    
     % activation of two highest items
     % largest
-[max_value,max_idx] = max(a);  
-a(max_idx) = NaN; 
-second_max = max(a);  
-a = max_value;    
-
-
-diff=max_value-second_max;
-if diff>theta
-    recalled_item(t)=max_idx;
-end
+    [max_value,max_idx] = max(a);
+    a(max_idx) = NaN; 
+    second_max = max(a);
+    a = max_value; % not sure what this line does
+    
+    % rewrote the following slightly to save space
+    if (max_value-second_max)>theta
+        recalled_item(t)=max_idx;
+    else
+        % should put something like this in so you know what is going in to
+        % vector
+        recalled_item(t)=0;
+    end
 end
 
 % I tried to vectorise this but I'm not sure it's possible with "find"
 for i=1:listlength;
     prop(i)=numel(find(recalled_item==i))/nTrials;
 end
+% not sure, but this particular operation is quicker with 'tabulate'.
+% However, I suggest you leave as is as recalled_item will soon become
+% a matrix...
 
 plot(1:i,prop)
 
