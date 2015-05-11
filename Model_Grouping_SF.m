@@ -50,60 +50,60 @@ for t=1:nTrials
     groupSize(numGroups) = listlength-cumulz(numGroups-1);
     groupSize = groupSize(1:numGroups);
     
+    % control element for list context
+    lContext = ones(1,numGroups);
+    %Ignore timing (assume, e.g., p_j^{CG} = 1)
+    eta_LC=1+randn(numGroups)*sigma_L; % Eq A3
+    
+    List_cue = 1;
+    % Simulate recall of current (last presented) list
+    C_LC=eta_LC.*phi_l.^abs(List_cue-lContext); %Eq A7
+    
+    % Length; % association of each item to the group context
+    C_NC=zeros(1,numGroups);
+    
+    % if group cue elemment was previously associated with control elemnent
+    % takes eta_NC else will be 0
+    % Assume people "tag" the first group - don't we want to assume they
+    %tag last group?
+    C_NC(Group_cue)=eta_NC;
+    % I'm using last group as context here:
+%     if C(Group_cue)==1
+%         C_NC(Group_cue)=eta_NC;
+%     else C(Group_cue)=0;
+%     end
+    
+    % select most actiavted control element
+    C=C_NC+C_LC;
+    [max_value,max_idx]=max(C)
+    C(max_idx)=1; % set control element for most activared to 1
+    
     % make group markers
     gContext = [];
     pContext = [];
     absP = [];
     % set control elements
-    C=zeros(1,numGroups); 
-
+    C=zeros(1,numGroups);
+    
     
     for gz=1:length(groupSize)
         gContext = [gContext repmat(gz,1,groupSize(gz))];
         pContext = [pContext linspace(0,1,groupSize(gz))];
         absP = [absP 1:groupSize(gz)];
     end
-   
-  item_probe=listlength-(groupSize(numGroups))+1; % want to probe for first item of last group
-  Group_cue=gContext(item_probe); 
-  List_cue=1;
+    
+    item_probe=listlength-(groupSize(numGroups))+1; % want to probe for first item of last group
+    Group_cue=gContext(item_probe);
+    
 
-% control element for list context
-C_LC=ones(length(listlength));
-%Ignore timing (assume, e.g., p_j^{CG} = 1)
-P_CG=1;
-noise=randn(List_cue)*sigma_L;
-eta_LC=P_CG+noise;
-C_LC=eta_LC*phi_l.^abs(C_LC(List_cue)-C_LC(List_cue));
-
-
-% Length; % association of each item to the group context
-C_NC=zeros(1,numGroups);
-
-  
-% if group cue elemment was previously associated with control elemnent
-% takes eta_NC else will be 0
-% Assume people "tag" the first group - don't we want to assume they 
-%tag last group?
-C(Group_cue)=1;
-% I'm using last group as context here:
-if C(Group_cue)==1
- C_NC(Group_cue)=eta_NC;
-else C(Group_cue)=0;
-end
- 
-% select most actiavted control element 
- C=C_NC+C_LC;
- [max_value,max_idx]=max(C)
- C(max_idx)=1; % set control element for most activared to 1 
-
+    
     %scale by noisy learning paramter
- noise=randn(1,12)*sigma_gp; % watch out, this needs to be multiplication
+    noise=randn(1,12)*sigma_gp; % watch out, this needs to be multiplication
     eta_gv=gamma.^(absP-1)+noise; % absP is the within-group ordinal position of
     v_GV = P_CG*eta_gv.*phi_g.^abs(gContext(item_probe)-gContext);
-   
+    
     v_PV = phi_p.^abs(pContext(item_probe)-pContext);
-
+    
     % implemented primacy gradient
     v_PV=eta_gv.*v_PV;
     
@@ -122,10 +122,10 @@ end
     % activation of two highest items
     % largest
     [max_value,max_idx] = max(a);
-    a(max_idx) = NaN; 
+    a(max_idx) = NaN;
     second_max = max(a);
     a = max_value; % not sure what this line does
-   
+    
     
     % rewrote the following slightly to save space
     if (max_value-second_max)>theta
