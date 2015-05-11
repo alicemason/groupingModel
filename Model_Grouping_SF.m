@@ -24,23 +24,15 @@ N_O=0; % counter for non recalled items
 for t=1:nTrials
     
     r=zeros(1,listlength);
-    % Set the group sizes
-    % moved following here
-    %numGroups = 4; % number of groups - did we decide that there needed to be 4
-    % or should this be random too?
-    %    groupSize=randsample(possGroupSize,numGroups,true);
-    %     while (sum(groupSize)>listlength || sum(groupSize)<listlength)
-    %         groupSize=randsample(possGroupSize,numGroups,true);
-    %     end
-    
-    
+   
     % Here is what happens in model
     % We generated a longish vector of group sizes, then find first
     % group that takes us beyond list length. We truncate that group
     % and use only the groups we need
     
-    % completely random
-    groupSize=randsample(possGroupSize,listlength,true);
+    
+    
+    groupSize=randsample(possGroupSize,listlength,true);% random
     
     % or constant within list, but varies across lists
     %groupSize=repmat(randsample(possGroupSize,1,true),1,listlength);
@@ -50,98 +42,62 @@ for t=1:nTrials
     groupSize(numGroups) = listlength-cumulz(numGroups-1);
     groupSize = groupSize(1:numGroups);
     
-    % control element for list context
-    lContext = ones(1,numGroups);
-    %Ignore timing (assume, e.g., p_j^{CG} = 1)
-    eta_LC=1+randn(numGroups)*sigma_L; % Eq A3
-    
-    List_cue = 1;
-    % Simulate recall of current (last presented) list
-    C_LC=eta_LC.*phi_l.^abs(List_cue-lContext); %Eq A7
-    
-    % Length; % association of each item to the group context
-    C_NC=zeros(1,numGroups);
-    
-    % if group cue elemment was previously associated with control elemnent
-    % takes eta_NC else will be 0
-    % Assume people "tag" the first group - don't we want to assume they
-    %tag last group?
-    C_NC(Group_cue)=eta_NC;
-    % I'm using last group as context here:
-%     if C(Group_cue)==1
-%         C_NC(Group_cue)=eta_NC;
-%     else C(Group_cue)=0;
-%     end
-    
-    % select most actiavted control element
-    C=C_NC+C_LC;
-    [max_value,max_idx]=max(C)
-    C(max_idx)=1; % set control element for most activared to 1
+    lContext = ones(1,numGroups);     % control element for list context (each group has a list context)
+    List_cue = 1; % cues the list - at moment set to last group
+    eta_LC=1+randn(1,numGroups)*sigma_L; % Eq A3
+    C_LC=eta_LC.*phi_l.^abs(List_cue-lContext); %Eq A7 - control element for list
+    C_NC=zeros(1,numGroups); % control element for group cue
+    C_NC(List_cue)=eta_NC;
+    C=zeros(1,numGroups); 
+    C=C_NC+C_LC; % list and group control elements added
+    [max_value,max_idx]=max(C) % select most activated
+C(max_idx)=1; % set control element for most activared to 1
     
     % make group markers
     gContext = [];
     pContext = [];
     absP = [];
     % set control elements
-    C=zeros(1,numGroups);
-    
-    
+
     for gz=1:length(groupSize)
         gContext = [gContext repmat(gz,1,groupSize(gz))];
         pContext = [pContext linspace(0,1,groupSize(gz))];
         absP = [absP 1:groupSize(gz)];
     end
     
-    item_probe=listlength-(groupSize(numGroups))+1; % want to probe for first item of last group
-    Group_cue=gContext(item_probe);
-    
+    item_probe=listlength-(sum(groupSize(max_idx:end)))+1; % want to probe for first item of cued group
+    Group_cue=max_idx;% conext cued of the most activated group
+    P_CG=1; % assume no effect of time
 
-    
-    %scale by noisy learning paramter
-    noise=randn(1,12)*sigma_gp; % watch out, this needs to be multiplication
-    eta_gv=gamma.^(absP-1)+noise; % absP is the within-group ordinal position of
-    v_GV = P_CG*eta_gv.*phi_g.^abs(gContext(item_probe)-gContext);
-    
-    v_PV = phi_p.^abs(pContext(item_probe)-pContext);
+    eta_gv=gamma.^(absP-1)+randn(1,listlength)*sigma_gp; %Eq A10
+    v_GV = P_CG*eta_gv.*phi_g.^abs(gContext(item_probe)-gContext); %Eq A11
+    v_PV = phi_p.^abs(pContext(item_probe)-pContext); %Eq A14
     
     % implemented primacy gradient
     v_PV=eta_gv.*v_PV;
     
     % sum group and item vectors to get activation of each item
-    t_v = rho*v_GV + (1-rho)*v_PV;
+    t_v = rho*v_GV + (1-rho)*v_PV; % Eq A15
     v(t,:)=t_v;
-    %Next step: implement item recall;
-    %for the moment, just assume recall of a single item using first item/last group as cue.
-    %Take average of the recalls, which will effectively be a first recall probability function.
-    
-    
+    % noisy retrieval Eq A16
     noise=randn(1,listlength)*sigma_v;
-    a=(t_v+noise).*(1-r);
-    %a(t,:)=(v(t,:)+N)*(1-r(t,:));
-    
+    a=(t_v+noise).*(1-r);    
     % activation of two highest items
-    % largest
     [max_value,max_idx] = max(a);
     a(max_idx) = NaN;
     second_max = max(a);
-    a = max_value; % not sure what this line does
+    a = max_value; % retruns max_value into a
     
-    
-    % rewrote the following slightly to save space
-    if (max_value-second_max)>theta
+        if (max_value-second_max)>theta
         recalled_item(t)=max_idx;
-    else
-        % should put something like this in so you know what is going in to
-        % vector
+        else
         recalled_item(t)=0;
     end
 end
 
-% I tried to vectorise this but I'm not sure it's possible with "find"
 for i=1:listlength;
     prop(i)=numel(find(recalled_item==i))/nTrials;
 end
-
 
 plot(1:i,prop)
 
