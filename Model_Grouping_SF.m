@@ -3,11 +3,14 @@ clear all
 %Model Parameters
 phi_p = 0.1;
 phi_g=0.3;
-gamma=0.97% rate of change of primacy gradient across groups
-sigma_gp=0.02%
+phi_l=0.35;
+gamma=0.97;% rate of change of primacy gradient across groups
+sigma_gp=0.02;%
+sigma_L=0.02;
 sigma_v=0.005;
 rho=0.3;
 theta=0.003;
+eta_NC=0.15;% learning rate for assoication between context and group
 
 % experimental details
 nTrials=1000;
@@ -48,44 +51,61 @@ for t=1:nTrials
     groupSize = groupSize(1:numGroups);
     
     % make group markers
-    
     gContext = [];
     pContext = [];
     absP = [];
+    % set control elements
+    C=zeros(1,numGroups); 
+
     
     for gz=1:length(groupSize)
         gContext = [gContext repmat(gz,1,groupSize(gz))];
         pContext = [pContext linspace(0,1,groupSize(gz))];
         absP = [absP 1:groupSize(gz)];
     end
-    item_probe=listlength-(groupSize(numGroups))+1; % want to probe for first item of last group
-    % (what you had was close)
-    
-    % priamcy gradient
-    % for each item work out first item of each group
-%     for i=1:listlength
-%         group_start(i)=listlength-sum(groupSize(gContext(i):numGroups))+1;
-%     end
-    % work out strength of each item within that group to first item of
-    % that group
-    
-    % huh? this is using group_start as the cue, but we still want to use
-    % item_probe
-    % v_PV = phi_p.^abs(pContext(group_start)-pContext);
-    
-    v_PV = phi_p.^abs(pContext(item_probe)-pContext);
-    
+   
+  item_probe=listlength-(groupSize(numGroups))+1; % want to probe for first item of last group
+  Group_cue=gContext(item_probe); 
+  List_cue=1;
+
+% control element for list context
+C_LC=ones(length(listlength));
+%Ignore timing (assume, e.g., p_j^{CG} = 1)
+P_CG=1;
+noise=randn(List_cue)*sigma_L;
+eta_LC=P_CG+noise;
+C_LC=eta_LC*phi_l.^abs(C_LC(List_cue)-C_LC(List_cue));
+
+
+% Length; % association of each item to the group context
+C_NC=zeros(1,numGroups);
+
+  
+% if group cue elemment was previously associated with control elemnent
+% takes eta_NC else will be 0
+% Assume people "tag" the first group - don't we want to assume they 
+%tag last group?
+C(Group_cue)=1;
+% I'm using last group as context here:
+if C(Group_cue)==1
+ C_NC(Group_cue)=eta_NC;
+else C(Group_cue)=0;
+end
+ 
+% select most actiavted control element 
+ C=C_NC+C_LC;
+ [max_value,max_idx]=max(C)
+ C(max_idx)=1; % set control element for most activared to 1 
+
     %scale by noisy learning paramter
-    noise=randn(1,12)*sigma_gp; % watch out, this needs to be multiplication
+ noise=randn(1,12)*sigma_gp; % watch out, this needs to be multiplication
     eta_gv=gamma.^(absP-1)+noise; % absP is the within-group ordinal position of
-                            % all items (a vector)
-   % renamed N to noise, as N is usually used to mean "number"
-    
+    v_GV = P_CG*eta_gv.*phi_g.^abs(gContext(item_probe)-gContext);
+   
+    v_PV = phi_p.^abs(pContext(item_probe)-pContext);
+
     % implemented primacy gradient
-    v_PV=eta_gv.*v_PV
-    % strength of each item to others in group
-    %  v_PV = phi_p.^abs(pContext(item_probe)-pContext);
-    v_GV = eta_gv.*phi_g.^abs(gContext(item_probe)-gContext);
+    v_PV=eta_gv.*v_PV;
     
     % sum group and item vectors to get activation of each item
     t_v = rho*v_GV + (1-rho)*v_PV;
@@ -95,8 +115,8 @@ for t=1:nTrials
     %Take average of the recalls, which will effectively be a first recall probability function.
     
     
-    N=randn(1,listlength)*sigma_v;
-    a=(t_v+N).*(1-r);
+    noise=randn(1,listlength)*sigma_v;
+    a=(t_v+noise).*(1-r);
     %a(t,:)=(v(t,:)+N)*(1-r(t,:));
     
     % activation of two highest items
@@ -121,26 +141,9 @@ end
 for i=1:listlength;
     prop(i)=numel(find(recalled_item==i))/nTrials;
 end
-% not sure, but this particular operation is quicker with 'tabulate'.
-% However, I suggest you leave as is as recalled_item will soon become
-% a matrix...
+
 
 plot(1:i,prop)
 
 Av_v=mean(v);
 Av_a=mean(a);
-
-
-
-
-
-% simulation with variable group sizes
-% simulate individual trials (list=12) 100 trials
-% on each trial you will have a different v (put into maxtrix)
-% within the trial (ie 12 items) have different size groups
-% group size vector uniform distrubution from 1-5
-% look at paper to see how done in paper
-% known list length
-
-
-% noisy retrieval
