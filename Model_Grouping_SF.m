@@ -11,6 +11,7 @@ sigma_v=0.005;
 rho=0.3;
 theta=0.003;
 eta_NC=0.15;% learning rate for assoication between context and group
+eta_O=0.6; % output interference
 
 % experimental details
 nTrials=1000;
@@ -60,6 +61,9 @@ for t=1:nTrials
     Group_cue=1; % Current group
     get_group_info=1;
     % make x attempts at recall
+        out_int=zeros(1,length(groupSize));
+out_int=[];
+    
     for outpos=1:3
     
         if get_group_info      
@@ -67,7 +71,13 @@ for t=1:nTrials
         eta_LC=1+randn(1,numGroups)*sigma_L; % Eq A3
         C_LC=eta_LC.*phi_l.^abs(List_cue-lContext); %Eq A7 - control element for list
         C_NC=zeros(1,numGroups); % control element for group cue
-        C_NC(Group_cue)=eta_NC; %cue to a particular group
+        C_NC(Group_cue)=eta_NC;
+        % output interference
+        if out_int
+        C_NC(out_int)=eta_O;
+        end
+   
+        %cue to a particular group
         C=C_NC+C_LC; % list and group control elements added
         [max_value,Current_Group]=max(C); % select most activated
         %C(Current_Group)=1; % set control element for most activared to 1
@@ -77,9 +87,14 @@ for t=1:nTrials
 
         P_CG=1; % assume no effect of time
         get_group_info=0; % context and Current_Group remain the same
+        
+        
+        out_int(Current_Group)=Current_Group;
+
         end
         
-        % 
+        
+   
         eta_gv=gamma.^(absP-1)+randn(1,listlength)*sigma_gp; %Eq A10
         v_GV = P_CG*eta_gv.*phi_g.^abs(Current_Group-gContext); %Eq A11
         v_PV = phi_p.^abs(Current_pContext(withinPos)-pContext); %Eq A14
@@ -93,6 +108,7 @@ for t=1:nTrials
         % noisy retrieval Eq A16
         noise=randn(1,listlength)*sigma_v;
         a=(t_v+noise).*(1-r);
+       
         % activation of two highest items
         [max_value,max_idx] = max(a);
         a(max_idx) = NaN;
@@ -101,6 +117,7 @@ for t=1:nTrials
         
         if (max_value-second_max)>theta
             recalled_item(t,outpos)=max_idx;
+            r(max_idx)=1;            
         else
             recalled_item(t,outpos)=0;
         end      
