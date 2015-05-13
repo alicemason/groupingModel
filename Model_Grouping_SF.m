@@ -17,8 +17,8 @@ nTrials=1000;
 listlength=12;
 possGroupSize=1:5;
 
-v=zeros(nTrials, listlength); % this can be easily pre-allocated, so should be
-recalled_item=zeros(nTrials,1);
+%rec=zeros(nTrials, listlength); % this can be easily pre-allocated, so should be
+recalled_item=zeros(nTrials,listlength);
 
 N_O=0; % counter for non recalled items
 
@@ -42,19 +42,7 @@ for t=1:nTrials
     groupSize = groupSize(1:numGroups);
     
     lContext = ones(1,numGroups);     % control element for list context (each group has a list context)
-    List_cue = 1; % cues the list - at moment set to last LIST
-    eta_LC=1+randn(1,numGroups)*sigma_L; % Eq A3
-    
-    C_LC=eta_LC.*phi_l.^abs(List_cue-lContext); %Eq A7 - control element for list
-    C_NC=zeros(1,numGroups); % control element for group cue
-    C_NC(1)=eta_NC; % this shouldn't be list cue, but rather the
-                            % cue to a particular group (let's say the
-                            % first, but try setting it to last group)
-    %C=zeros(1,numGroups); % don't need this, as it is overwritten in next line
-    C=C_NC+C_LC; % list and group control elements added
-    [max_value,max_idx]=max(C); % select most activated
-    C(max_idx)=1; % set control element for most activared to 1
-    % not sure what effect previous line has, as it isn't used below
+    listCue = 1; % cues the list - at moment set to last LIST
     
     % make group markers
     gContext = [];
@@ -68,38 +56,69 @@ for t=1:nTrials
         absP = [absP 1:groupSize(gz)];
     end
     
-    % commented out following line as it didn't make sense
-    %item_probe=listlength-(sum(groupSize(max_idx:end)))+1; % want to probe for first item of cued group
-    % instead, let's just use 1 for the moment, and soon we will
-    % implement sequential retrieval
-    item_probe = 1;
-    
-    Group_cue=max_idx;% conext cued of the most activated group
-    P_CG=1; % assume no effect of time
-    
-    eta_gv=gamma.^(absP-1)+randn(1,listlength)*sigma_gp; %Eq A10
-    v_GV = P_CG*eta_gv.*phi_g.^abs(Group_cue-gContext); %Eq A11
-    v_PV = phi_p.^abs(pContext(item_probe)-pContext); %Eq A14
-    
-    % implemented primacy gradient
-    v_PV=eta_gv.*v_PV;
-    
-    % sum group and item vectors to get activation of each item
-    t_v = rho*v_GV + (1-rho)*v_PV; % Eq A15
-    v(t,:)=t_v;
-    % noisy retrieval Eq A16
-    noise=randn(1,listlength)*sigma_v;
-    a=(t_v+noise).*(1-r);
-    % activation of two highest items
-    [max_value,max_idx] = max(a);
-    a(max_idx) = NaN;
-    second_max = max(a);
-    a = max_value; % retruns max_value into a
-    
-    if (max_value-second_max)>theta
-        recalled_item(t)=max_idx;
-    else
-        recalled_item(t)=0;
+    groupCue = 1; % start with first group; this will get incremented below
+    needNewGroup = 1; % a flag to indicate whether we need a new group
+        
+    for outpos=1:3
+        
+        if needNewGroup
+            
+            eta_LC=1+randn(1,numGroups)*sigma_L; % Eq A3
+            
+            C_LC=eta_LC.*phi_l.^abs(listCue-lContext); %Eq A7 - control element for list
+            C_NC=zeros(1,numGroups); % control element for group cue
+            C_NC(groupCue)=eta_NC; % this shouldn't be list cue, but rather the
+            % cue to a particular group (let's say the
+            % first, but try setting it to last group)
+            %C=zeros(1,numGroups); % don't need this, as it is overwritten in next line
+            C=C_NC+C_LC; % list and group control elements added
+            [max_value,currGroup]=max(C); % select most activated
+            %currGroup refers to group we are currently trying to recall from
+            
+            % cue sequentially from first item
+            % we find out how long the current group is, and then
+            % construct scaled [0-1] within-grpup markers based on this
+            % information
+            currpContext = linspace(0,1,groupSize(currGroup));
+            withinPos = 1;
+
+            P_CG=1; % assume no effect of time
+            
+            needNewGroup = 0;
+        end
+        
+        eta_gv=gamma.^(absP-1)+randn(1,listlength)*sigma_gp; %Eq A10
+        v_GV = P_CG*eta_gv.*phi_g.^abs(currGroup-gContext); %Eq A11
+        v_PV = phi_p.^abs(currpContext(withinPos)-pContext); %Eq A14
+        
+        % implemented primacy gradient
+        v_PV=eta_gv.*v_PV;
+        
+        % sum group and item vectors to get activation of each item
+        t_v = rho*v_GV + (1-rho)*v_PV; % Eq A15
+        v(t,:)=t_v;
+        % noisy retrieval Eq A16
+        noise=randn(1,listlength)*sigma_v;
+        a=(t_v+noise).*(1-r);
+        % activation of two highest items
+        [max_value,max_idx] = max(a);
+        a(max_idx) = NaN;
+        second_max = max(a);
+        a = max_value; % retruns max_value into a
+        
+        if (max_value-second_max)>theta
+            recalled_item(t,outpos)=max_idx;
+        else
+            recalled_item(t,outpos)=0;
+        end
+        
+        withinPos = withinPos + 1;
+        
+        if withinPos>groupSize(currGroup) % have we gone beyond the end of
+                                            % current group?
+            needNewGroup = 1;
+            groupCue = groupCue + 1;
+        end
     end
 end
 
