@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
         clear all
         %Model Parameters
         phi_p = 0.1;
@@ -40,7 +41,6 @@
             numGroups = find(cumulz>=listlength, 1, 'first'); % finds first instance
             groupSize(numGroups) = listlength-cumulz(numGroups-1);
             groupSize = groupSize(1:numGroups);
-
 
             for List_cue =1:3 % cues the list - at moment set to last LIST
 
