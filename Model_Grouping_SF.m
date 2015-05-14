@@ -1,21 +1,22 @@
 clear all
 %Model Parameters
-phi_p = 0.1;
+phi_p = 0.6;
 phi_g=0.3;
 phi_l=0.35;
 gamma=0.97;% rate of change of primacy gradient across groups
 sigma_gp=0.02;%
 sigma_L=0.02;
 sigma_v=0.005;
-rho=0.3;
+rho=0.7;
 theta=0.003;
 eta_NC=0.15;% learning rate for assoication between context and group
-eta_O=0.6; % output interference
+eta_O=0.15; % output interference
 
 % experimental details
 nTrials=1000;
-listlength=12;
-possGroupSize=1:5;
+listlength=9;
+possGroupSize=[3 3];
+time_Act = 1-exp(-0.5*1);
 
 v=zeros(nTrials, listlength); % this can be easily pre-allocated, so should be
 recalled_item=zeros(nTrials,listlength);
@@ -39,8 +40,12 @@ for t=1:nTrials
     
     cumulz = cumsum(groupSize);
     numGroups = find(cumulz>=listlength, 1, 'first'); % finds first instance
-    groupSize(numGroups) = listlength-cumulz(numGroups-1);
-    groupSize = groupSize(1:numGroups);
+    if numGroups>1
+        groupSize(numGroups) = listlength-cumulz(numGroups-1);
+        groupSize = groupSize(1:numGroups);
+    else
+        groupSize = listlength;
+    end
     
     lContext = ones(1,numGroups);     % control element for list context (each group has a list context)
     List_cue=1; % only have one list at the moment
@@ -68,11 +73,14 @@ for t=1:nTrials
     out_int=zeros(1,numGroups);
     gSupp = zeros(1,numGroups);
     
-    for outpos=1:12
+    eta_LC=time_Act+randn(1,numGroups)*sigma_L; % Eq A3
+    eta_gv=gamma.^(absP-1)+randn(1,listlength)*sigma_gp; %Eq A10
+    
+    for outpos=1:listlength
         
         if get_group_info
             % list cue and group cue to context
-            eta_LC=1+randn(1,numGroups)*sigma_L; % Eq A3
+            
             C_LC=(eta_LC+out_int).*phi_l.^abs(List_cue-lContext); %Eq A7 - control element for list
             C_NC=zeros(1,numGroups); % control element for group cue
             C_NC(Group_cue)=eta_NC;
@@ -99,7 +107,7 @@ for t=1:nTrials
             withinPos=1; % set the within group maker to 1 for new group
             
             if gSupp(Current_Group)==0
-                P_CG=1; % assume no effect of time
+                P_CG=time_Act; % assume no effect of time
             else
                 P_CG=0; % we've already retrieved this, to set group context to null
             end
@@ -112,12 +120,11 @@ for t=1:nTrials
             
         end
         
-        eta_gv=gamma.^(absP-1)+randn(1,listlength)*sigma_gp; %Eq A10
-        v_GV = P_CG*eta_gv.*phi_g.^abs(Current_Group-gContext); %Eq A11
-        v_PV = phi_p.^abs(Current_pContext(withinPos)-pContext); %Eq A14
-        
-        % implemented primacy gradient
-        v_PV=eta_gv.*v_PV;
+        v_GV = eta_gv.*phi_g.^abs(Current_Group-gContext); %Eq A11
+        v_GV = P_CG.*(v_GV./sum(v_GV));
+        v_PV = eta_gv.*...
+            phi_p.^abs(Current_pContext(withinPos)-pContext); %Eq A14
+        v_PV = v_PV/sum(v_PV);
         
         % sum group and item vectors to get activation of each item
         t_v = rho*v_GV + (1-rho)*v_PV; % Eq A15
@@ -157,8 +164,9 @@ end
 % end
 
 % serial recall scoring
-prop = mean(recalled_item==repmat(1:12,nTrials,1));
+prop = mean(recalled_item==repmat(1:listlength,nTrials,1));
 plot(prop)
+ylim([0 1]);
 
 Av_v=mean(v);
 Av_a=mean(a);
