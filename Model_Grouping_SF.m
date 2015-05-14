@@ -27,6 +27,7 @@ for t=1:nTrials
     
     r=zeros(1,listlength);
     
+    
     % Here is what happens in model
     % We generated a longish vector of group sizes, then find first
     % group that takes us beyond list length. We truncate that group
@@ -43,8 +44,8 @@ for t=1:nTrials
     groupSize = groupSize(1:numGroups);
     
     lContext = ones(1,numGroups);     % control element for list context (each group has a list context)
-    List_cue=1; % only have one list at the moment 
-
+    List_cue=1; % only have one list at the moment
+    
     % make group markers
     gContext = [];
     pContext = [];
@@ -61,40 +62,49 @@ for t=1:nTrials
     Group_cue=1; % Current group
     get_group_info=1;
     % make x attempts at recall
-        out_int=zeros(1,length(groupSize));
-out_int=[];
+    out_int=zeros(1,numGroups);
+    gSupp = zeros(1,numGroups);
     
-    for outpos=1:3
-    
-        if get_group_info      
-        % list cue and group cue to context
-        eta_LC=1+randn(1,numGroups)*sigma_L; % Eq A3
-        C_LC=eta_LC.*phi_l.^abs(List_cue-lContext); %Eq A7 - control element for list
-        C_NC=zeros(1,numGroups); % control element for group cue
-        C_NC(Group_cue)=eta_NC;
-        % output interference
-        if out_int
-        C_NC(out_int)=eta_O;
+    for outpos=1:12
+        
+        if get_group_info
+            % list cue and group cue to context
+            eta_LC=1+randn(1,numGroups)*sigma_L; % Eq A3
+            C_LC=(eta_LC+out_int).*phi_l.^abs(List_cue-lContext); %Eq A7 - control element for list
+            C_NC=zeros(1,numGroups); % control element for group cue
+            C_NC(Group_cue)=eta_NC;
+            
+            % output interference
+%             if out_int
+%                 C_NC(out_int)=eta_O;
+%             end
+           
+            %cue to a particular group
+            C=C_NC+C_LC; % list and group control elements added
+            [max_value,Current_Group]=max(C); % select most activated
+            %C(Current_Group)=1; % set control element for most activared to 1
+            
+            
+            % output interference acts on associations to l (so C_LC)
+            out_int(Current_Group) = eta_O;
+            
+            Current_pContext = linspace(0,1,groupSize(Current_Group));
+            withinPos=1; % set the within group maker to 1 for new group
+            
+            if gSupp(Current_Group)==0
+                P_CG=1; % assume no effect of time
+            else
+                P_CG=0; % we've already retrieved this, to set group context to null
+            end
+            get_group_info=0; % context and Current_Group remain the same
+            
+            
+            out_int(Current_Group)=eta_O;
+            
+            gSupp(Current_Group) = 1;
+            
         end
-   
-        %cue to a particular group
-        C=C_NC+C_LC; % list and group control elements added
-        [max_value,Current_Group]=max(C); % select most activated
-        %C(Current_Group)=1; % set control element for most activared to 1
-        
-        Current_pContext = linspace(0,1,groupSize(Current_Group));
-                withinPos=1; % set the within group maker to 1 for new group
 
-        P_CG=1; % assume no effect of time
-        get_group_info=0; % context and Current_Group remain the same
-        
-        
-        out_int(Current_Group)=Current_Group;
-
-        end
-        
-        
-   
         eta_gv=gamma.^(absP-1)+randn(1,listlength)*sigma_gp; %Eq A10
         v_GV = P_CG*eta_gv.*phi_g.^abs(Current_Group-gContext); %Eq A11
         v_PV = phi_p.^abs(Current_pContext(withinPos)-pContext); %Eq A14
@@ -108,7 +118,7 @@ out_int=[];
         % noisy retrieval Eq A16
         noise=randn(1,listlength)*sigma_v;
         a=(t_v+noise).*(1-r);
-       
+        
         % activation of two highest items
         [max_value,max_idx] = max(a);
         a(max_idx) = NaN;
@@ -117,16 +127,20 @@ out_int=[];
         
         if (max_value-second_max)>theta
             recalled_item(t,outpos)=max_idx;
-            r(max_idx)=1;            
+            r(max_idx)=1;
         else
             recalled_item(t,outpos)=0;
-        end      
+        end
         
         withinPos=withinPos+1;% now recall of next item of current group will be attempted
-         % check if we have reached end of current group
+        
+        % check if we have reached end of current group
         if  withinPos>groupSize(Current_Group)
             get_group_info=1;
             Group_cue=Group_cue+1; % assume next group is accessed - serial recall
+            if Group_cue > numGroups
+                Group_cue = 1;
+            end
         end
     end
 end
