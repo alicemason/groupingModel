@@ -1,4 +1,3 @@
-
 clear all
 %Model Parameters
 phi_p = 0.1;
@@ -54,7 +53,11 @@ for t=1:nTrials
     
     for gz=1:length(groupSize)
         gContext = [gContext repmat(gz,1,groupSize(gz))];
-        pContext = [pContext linspace(0,1,groupSize(gz))];
+        if groupSize(gz)>1
+            pContext = [pContext linspace(0,1,groupSize(gz))];
+        else
+            pContext = [pContext 0];
+        end
         absP = [absP 1:groupSize(gz)];
     end
     
@@ -75,10 +78,10 @@ for t=1:nTrials
             C_NC(Group_cue)=eta_NC;
             
             % output interference
-%             if out_int
-%                 C_NC(out_int)=eta_O;
-%             end
-           
+            %             if out_int
+            %                 C_NC(out_int)=eta_O;
+            %             end
+            
             %cue to a particular group
             C=C_NC+C_LC; % list and group control elements added
             [max_value,Current_Group]=max(C); % select most activated
@@ -89,6 +92,10 @@ for t=1:nTrials
             out_int(Current_Group) = eta_O;
             
             Current_pContext = linspace(0,1,groupSize(Current_Group));
+            if length(Current_pContext)==1
+                Current_pContext=0;
+            end
+            
             withinPos=1; % set the within group maker to 1 for new group
             
             if gSupp(Current_Group)==0
@@ -104,7 +111,7 @@ for t=1:nTrials
             gSupp(Current_Group) = 1;
             
         end
-
+        
         eta_gv=gamma.^(absP-1)+randn(1,listlength)*sigma_gp; %Eq A10
         v_GV = P_CG*eta_gv.*phi_g.^abs(Current_Group-gContext); %Eq A11
         v_PV = phi_p.^abs(Current_pContext(withinPos)-pContext); %Eq A14
@@ -139,17 +146,19 @@ for t=1:nTrials
             get_group_info=1;
             Group_cue=Group_cue+1; % assume next group is accessed - serial recall
             if Group_cue > numGroups
-                Group_cue = 1;
+                Group_cue = numGroups;
             end
         end
     end
 end
 
-for i=1:listlength;
-    prop(i)=numel(find(recalled_item==i))/nTrials;
-end
+% for i=1:listlength;
+%     prop(i)=numel(find(recalled_item==i))/nTrials;
+% end
 
-plot(1:i,prop)
+% serial recall scoring
+prop = mean(recalled_item==repmat(1:12,nTrials,1));
+plot(prop)
 
 Av_v=mean(v);
 Av_a=mean(a);
