@@ -26,7 +26,9 @@ nTrials = nBlocks * nTrialsPerBlock;
 
 Partial_Prom = zeros(1,nBlocks);
 Full_Prom = zeros(1,nBlocks);
+nReps=1000;
 
+for reps=1:nReps
 t = 1;
 
 for p=1:2; %1=partial 2=full either running partial or full
@@ -63,22 +65,18 @@ for p=1:2; %1=partial 2=full either running partial or full
         end
         
         if p==1
-            Partial_Prom(block) = mean(t_P);
+            Partial_Prom(reps,block) = mean(t_P);
         else
-            Full_Prom(block) = mean(t_P);
+            Full_Prom(reps,block) = mean(t_P);
         end
     end
-%     if run==1
-%         Partial_Prom=P_Prom;
-%         run=run+1
-%     elseif run==2
-%         Full_Prom=P_Prom;
-%     end
-end
-hold on
-plot(Full_Prom)
-plot(Partial_Prom)
-hold off
 
+end
+end
+ hold on
+ plot(mean(Full_Prom))
+ plot(mean(Partial_Prom))
+ hold off
+% 
 
 
