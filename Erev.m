@@ -30,10 +30,10 @@ nReps=1000;
 
 for reps=1:nReps
 t = 1;
+counter=1;
 
 for p=1:2; %1=partial 2=full either running partial or full
 
-    counter=1;
     
     Q = zeros(2,1); % there are 2 options
     
@@ -51,15 +51,17 @@ for p=1:2; %1=partial 2=full either running partial or full
             
             % v's need to be sampled--they are random
             v(1) = randsample(curr_prom,1);
+            if v(1)==prom(1,1)
+            counter=counter+1
+            end
+            if counter>51
+                v(1)=prom(1,2)
+            end
+            
             v(2) = demoted;
             
             t_P(t)=1/(1+exp(sigma*(Q(2)-Q(1)))); % probability of choosing j over
-            
-            % propenitity to choose options k and j on next trial
-%             Q(j,t+1)=(1-w)*Q(j,t)+(w*v(j,t)); % if it was j that was observed
-%             Q(k,t+1)=(1-w)*Q(k,t)+(w*v(k,t)); % if it was k that was observed
 
-            % people see all outcomes
             Q = (1-w).*Q + w.*v';
             
         end
