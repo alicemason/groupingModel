@@ -4,8 +4,8 @@ close all
 sigma=4; %free response stregth parameter
 w= 0.05; % free weighting parameter
 
-
-demoted=8; % demoted option points
+Exp=2;
+demoted=[8 2]; % demoted option points
 
 %promoted options during training
 prom(1,:)=[17 1]; % partial reinforcement
@@ -58,7 +58,7 @@ for p=1:2; %1=partial 2=full either running partial or full
                 v(1)=prom(1,2)
             end
             
-            v(2) = demoted;
+            v(2) = demoted(Exp);
             
             t_P(t)=1/(1+exp(sigma*(Q(2)-Q(1)))); % probability of choosing j over
 

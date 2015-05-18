@@ -3,8 +3,8 @@ clear all
 % contingent-sampling model in which similarity was defined
 %on the basis of the relative advantage of
 %the promoted option in the m most recent trials
-
-demoted=8; % demoted option points
+Exp=2;
+demoted=[8 2]; % demoted option points
 
 %promoted options during training
 prom(1,:)=[17 1]; % partial reinforcement
@@ -33,9 +33,7 @@ for m=4
     for p=1:2; %1=partial 2=full either running partial or full
         % nesting p inside reps didn't make sense to me, as full and
         % partial are different conditions (ppl don't see same thing)
-        
-        p
-        
+ 
         for reps=1:nReps
 
             t = 1;
@@ -51,7 +49,7 @@ for m=4
             
             v = [randsample(vTrain,length(vTrain),false) ...
                 randsample(vExt,length(vExt),false)];
-            v = [v; repmat(demoted,1,nTrials)];
+            v = [v; repmat(demoted(Exp),1,nTrials)];
             [y, maxi] = max(v);
             v = [v; maxi==1];
             
@@ -123,7 +121,7 @@ for m=4
                         exVal = mean(v(1,matches+m));
                     
                         % choose option with highest value
-                        t_P(t,block) = exVal>demoted;
+                        t_P(t,block) = exVal>demoted(Exp);
                     else % if we don't have any matches...
                         t_P(t,block) = rand>0.5; % ...just guess
                     end
