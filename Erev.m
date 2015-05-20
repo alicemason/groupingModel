@@ -53,8 +53,7 @@ for p=1:2; %1=partial 2=full either running partial or full
             v(1) = randsample(curr_prom,1);
             if v(1)==prom(1,1)
             counter=counter+1;
-            end
-            if counter>51
+            elseif p==1 & counter>51
                 v(1)=prom(1,2)
             end
             
