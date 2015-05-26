@@ -81,11 +81,13 @@
                             for t=1:nTrialsPerBlock
                                 %SIZE of current group
                                 payoff=[];
+                                %current group size
                                 Curr_group=groupSize(gContext(absT));                        
-
+                                %if this is the first item of a group then payoff will be 0 -no info available    
                                 if absP(absT)==1
                                        payoff=[];
-
+                                %if the groupsize of the current group is
+                                %bigger than 1
                                 elseif groupSize(gContext(absT))>1      
                                 Start_CG=1+(find((gContext(1:absT)~=gContext(absT)),1,'last'));
                                 Index_CG= Start_CG:(absT-1);
@@ -98,12 +100,12 @@
                                         groupStart=find(gContext==g,1,'first');
                                         if groupSize(gContext(groupStart))>=sample_size
                                             sequence=strfind(v(3,groupStart:(groupStart+sample_size-1)),payoff_CG);
-                                            if absP(sequence)==2
-                                                match=groupStart;
+                                            if absP(sequence)==2 % if it's the second item of a group just compare to first items
+                                                match=groupStart; % otherswise compare to sequecne length
                                             else
                                             match=groupStart:(groupStart+sample_size-1);
                                             end
-                                        payoff=[payoff;match];
+                                        payoff=[payoff;match]; % build up payoff index for each time the sequence has been sampled
                                     end
 
                                     end
