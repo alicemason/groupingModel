@@ -10,7 +10,7 @@ demoted=[8 2]; % demoted option points
 prom(1,:)=[17 1]; % partial reinforcement
 prom(2,:)=[9 9]; %full reinforce
 
-prom_ext = [1 1]; % promoted points during extinction
+prom_ext = [11]; % promoted points during extinction
 
 nTrialsPerBlock=10; % number of trials per block
 j=1;
@@ -18,7 +18,7 @@ k=2;
 run=1;
 
 nTrainBlocks = 10;
-nTestBlocks = 10; % these are really extinction blocks; should prob rename
+nTestBlocks = 20; % these are really extinction blocks; should prob rename
 
 nBlocks = nTrainBlocks + nTestBlocks;
 nTrials = nBlocks * nTrialsPerBlock;
@@ -26,9 +26,9 @@ nTrials = nBlocks * nTrialsPerBlock;
 Partial_Prom = zeros(1,nBlocks);
 Full_Prom = zeros(1,nBlocks);
 
-nReps=2000;
+nReps=200;
 
-for m=4
+for m=1:4
     
     for p=1:2; %1=partial 2=full either running partial or full
         % nesting p inside reps didn't make sense to me, as full and
@@ -152,8 +152,8 @@ for m=4
         end
     end
     
-    Full_P_prom(m,1:20)=mean(Full_Prom(:,1:20));
-    Partial_P_prom(m,1:20)=mean(Partial_Prom(:,1:20));
+    Full_P_prom(m,1:nBlocks)=mean(Full_Prom(:,1:nBlocks));
+    Partial_P_prom(m,1:nBlocks)=mean(Partial_Prom(:,1:nBlocks));
     
     subplot(1,5,m);
     
