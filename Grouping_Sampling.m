@@ -1,5 +1,5 @@
-
-                Exp=2;
+ 
+                Exp=1;
                 demoted=[8 2]; % demoted option points
 
                 %promoted options during training
@@ -26,7 +26,7 @@
 
                 possGroupSize=[2 3 4 5];
 
-                nReps=1000;
+                nReps=200;
 
 
                 for p=1:2; %1=partial 2=full either running partial or full
@@ -85,7 +85,7 @@
                                 Curr_group=groupSize(gContext(absT));                        
                                 %if this is the first item of a group then payoff will be 0 -no info available    
                                 if absP(absT)==1
-                                       payoff=[];
+                                       payoff=rand>0.5;
                                 %if the groupsize of the current group is
                                 %bigger than 1
                                 elseif groupSize(gContext(absT))>1      
@@ -100,13 +100,11 @@
                                         groupStart=find(gContext==g,1,'first');
                                         if groupSize(gContext(groupStart))>=sample_size
                                             sequence=strfind(v(3,groupStart:(groupStart+sample_size-1)),payoff_CG);
-                                            if absP(sequence)==2 % if it's the second item of a group just compare to first items
-                                                match=groupStart; % otherswise compare to sequecne length
-                                            else
-                                            match=groupStart:(groupStart+sample_size-1);
-                                            end
+                                            if sequence==1
+                                            match=groupStart+sample_size;
                                         payoff=[payoff;match]; % build up payoff index for each time the sequence has been sampled
-                                    end
+                                            end
+                                            end
 
                                     end
                                 end
@@ -138,12 +136,9 @@
                     Partial_P_prom(1:20)=mean(Partial_Prom)
 
 
-                    plot(Full_P_prom)
-                    hold on
-                    plot(Partial_P_prom)
-                    hold off
-
-
-
-
-
+                 plot(mean(Partial_Prom))
+hold on
+%    subplot(1,5,m);
+plot(mean(Full_Prom))
+hold off
+ylim([0 1])

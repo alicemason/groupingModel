@@ -26,9 +26,9 @@ nTrials = nBlocks * nTrialsPerBlock;
 Partial_Prom = zeros(1,nBlocks);
 Full_Prom = zeros(1,nBlocks);
 
-nReps=2000;
+nReps=200;
 
-for m=4
+for m=1:4
     
     for p=1:2; %1=partial 2=full either running partial or full
         % nesting p inside reps didn't make sense to me, as full and
@@ -152,8 +152,8 @@ for m=4
         end
     end
     
-    Full_P_prom(m,1:20)=mean(Full_Prom(:,1:20));
-    Partial_P_prom(m,1:20)=mean(Partial_Prom(:,1:20));
+    Full_P_prom(m,1:nBlocks)=mean(Full_Prom(:,1:nBlocks));
+    Partial_P_prom(m,1:nBlocks)=mean(Partial_Prom(:,1:nBlocks));
     
     subplot(1,5,m);
     
