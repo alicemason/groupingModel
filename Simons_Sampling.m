@@ -1,9 +1,9 @@
 
-clear all
+clear all; close all
 % contingent-sampling model in which similarity was defined
 %on the basis of the relative advantage of
 %the promoted option in the m most recent trials
-Exp=1;
+Exp=2;
 demoted=[8 2]; % demoted option points
 
 %promoted options during training
@@ -27,7 +27,7 @@ Partial_Prom = zeros(1,nBlocks);
 Full_Prom = zeros(1,nBlocks);
 
 groupSizes = [2 3 4 5];
-recScale = 0.0; % set to 0 for no recency
+recScale = 0; % set to 0 for no recency
 
 nReps=200;
 
