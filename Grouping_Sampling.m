@@ -21,7 +21,7 @@
 
     nBlocks = nTrainBlocks + nTestBlocks;
     nTrials = nBlocks * nTrialsPerBlock;
-    listlength=nTrials;
+    listlength=nTrials/2;
     Partial_Prom = zeros(1,nBlocks);
     Full_Prom = zeros(1,nBlocks);
 
@@ -50,23 +50,43 @@
             v = [v; repmat(demoted(Exp),1,nTrials)];
             [y, maxi] = max(v);
             v = [v; maxi==1];
-
             absP = [];
             gContext=[];
             groups=1;
-            groupSize=randsample(possGroupSize,listlength,true);% random
-            cumulz = cumsum(groupSize);
+            groupSize=[];     
+            
+            for list=1:2
+                make_absP=[];
+            make_gContext=[];
+            GS=[];
+            GS=randsample(possGroupSize,listlength,true);% random
+            cumulz = cumsum(GS);
             numGroups = find(cumulz>=listlength, 1, 'first'); % finds first instance
             if numGroups>1
-                groupSize(numGroups) = listlength-cumulz(numGroups-1);
-                groupSize = groupSize(1:numGroups);
+                GS(numGroups) = listlength-cumulz(numGroups-1);
+                GS = GS(1:numGroups);
             else
-                groupSize = listlength;
+                GS = listlength;
             end
+            
+      
+%             for gz=1:length(GS)
+%                 make_gContext = [make_gContext repmat(gz,1,GS(gz))];
+%                 make_absP= [make_absP 1:GS(gz)];
+%             end
+%             gContext=[gContext make_gContext];
+%             absP=[absP make_absP];
+%                        groupSize=[groupSize GS];
+                    
 
-            for gz=1:length(groupSize)
-                gContext = [gContext repmat(gz,1,groupSize(gz))];
-                absP = [absP 1:groupSize(gz)];
+                                   groupSize=[groupSize GS];
+
+
+
+            end
+ for gz=1:length(groupSize)
+               gContext = [gContext repmat(gz,1,groupSize(gz))];
+             absP= [absP 1:groupSize(gz)];
             end
 
 
@@ -74,8 +94,12 @@
 
                 if block > nTrainBlocks
                     curr_prom = prom_ext;
+                    list=2;
+                    Start_CL=101;
                 else
                     curr_prom = prom(p,:);
+                    list=1;
+                    Start_CL=1;
                 end
 
 
@@ -87,20 +111,25 @@
                    % this is the first item of a group then payoff will be 0 -no info available
                      if absP(absT)==1
 
-                         first_pos=find(absP(1:absT-1)==1);
+                         first_pos=find(absP(Start_CL:absT-1)==1);
 
                  payoff=first_pos;
 
                     elseif groupSize(gContext(absT))>1
-                        Start_CG=1+(find((gContext(1:absT)~=gContext(absT)),1,'last'));
+                        Start_CG=1+(find((gContext(Start_CL:absT)~=gContext(absT)),1,'last'));
                         Index_CG= Start_CG:(absT-1);
                         payoff_CG=v(3,Index_CG); % find sequence for current group to t-1
                         sample_size=length(payoff_CG);
+                       if isempty(payoff_CG);
+                           sample_size=[];
+                       end
+                       
                         % find all other groups that have been seen that are smaller than
                         % or equal to size of current group
 
-                        for g=1:(gContext(absT-1))
-                            groupStart=find(gContext==g,1,'first');
+                        for g=gContext(Start_CL):(gContext(absT-1))
+                            groupStart=find(gContext(Start_CL:absT-1)==g,1,'first');
+                            groupStart=Start_CL+groupStart-1;
                             if groupSize(gContext(groupStart))>=sample_size
                                 %sequence=strfind(v(3,groupStart:(groupStart+sample_size-1)),payoff_CG);
                                 sequence=all(v(3,groupStart:(groupStart+sample_size-1))==payoff_CG);
