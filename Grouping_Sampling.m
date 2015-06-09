@@ -1,6 +1,6 @@
 close all; clear all
 w_CL=1;
-w_PL=0.2;
+w_PL=1;
 Exp=2;
 demoted=[8 2]; % demoted option points
 
