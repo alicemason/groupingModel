@@ -28,7 +28,7 @@ nTrials = nBlocks * nTrialsPerBlock;
 Partial_Prom = zeros(1,nBlocks);
 Full_Prom = zeros(1,nBlocks);
 
-groupSizes = [2 3];
+groupSizes = [2 3 4 5];
 recScale = -0.1; % set to 0 for no recency; if negative, use list context
     % to implement recency
 
