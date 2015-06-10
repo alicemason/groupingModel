@@ -20,14 +20,17 @@ run=1;
 nTrainBlocks = 10;
 nTestBlocks = 10; % these are really extinction blocks; should prob rename
 
+listBoundary = nTrainBlocks * nTrialsPerBlock + 1; % first item of new list
+
 nBlocks = nTrainBlocks + nTestBlocks;
 nTrials = nBlocks * nTrialsPerBlock;
 
 Partial_Prom = zeros(1,nBlocks);
 Full_Prom = zeros(1,nBlocks);
 
-groupSizes = [2 3 4 5];
-recScale = 0; % set to 0 for no recency
+groupSizes = [2 3];
+recScale = -0.1; % set to 0 for no recency; if negative, use list context
+    % to implement recency
 
 nReps=200;
 
@@ -60,6 +63,7 @@ for p=1:2; %1=partial 2=full either running partial or full
         groupVals = NaN(nTrials,max(groupSizes));
         groupHistSize = zeros(nTrials,1);
         groupIndex = 0;
+        groupLists = NaN(nTrials,1);
         
         for block=1:nBlocks
             
@@ -73,8 +77,15 @@ for p=1:2; %1=partial 2=full either running partial or full
             
             for t=1:nTrialsPerBlock
                
+                currList = (absT>=listBoundary)+1;
                 if newGroup==1
                     currGroupSize = randsample(groupSizes,1);
+                    
+                    % this prevents group from crossing over group boundary
+                    if (absT<listBoundary) && (absT+currGroupSize)>listBoundary
+                        currGroupSize = listBoundary-absT;
+                    end
+                        
                     inpos = 1;
                     newGroup=0;
                     currGroup = NaN(1,currGroupSize);
@@ -99,8 +110,15 @@ for p=1:2; %1=partial 2=full either running partial or full
                 % We want the expected payoff given that sequence;
                 % so average rewards following each match
                 if sum(matches)>0
-                    weights = exp(recScale.*((1:(groupIndex-1))-(groupIndex-1)));
-                    weights(groupIndex:nTrials) = 0;
+                    if recScale < 0
+                        weights = (-recScale).^abs(groupLists(1:(groupIndex-1))-currList);
+                        weights(groupIndex:nTrials) = 0;
+                        weights = weights';
+                    else
+                        weights = exp(recScale.*((1:(groupIndex-1))-(groupIndex-1)));
+                        weights(groupIndex:nTrials) = 0;
+                    end
+                    
                     weights = weights(matches)./sum(weights(matches));
                     exVal = sum(groupVals(matches,inpos).*weights');
                     
@@ -141,6 +159,7 @@ for p=1:2; %1=partial 2=full either running partial or full
                     groupHist(groupIndex,1:(inpos-1)) = currGroup;
                     groupVals(groupIndex,1:(inpos-1)) = currVals;
                     groupHistSize(groupIndex) = currGroupSize;
+                    groupLists(groupIndex) = currList;
                 end
             end
             
